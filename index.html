@@ -7610,7 +7610,7 @@ function renderQuiz() {
   } else {
     // transform or fill (text input)
     html += `
-      <input type="text" class="answer-input" id="answer-input" placeholder="答えを入力してください / Ketik jawaban..." autocomplete="off" autofocus>
+      <input type="text" class="answer-input" id="answer-input" placeholder="答えを入力 / Ketik jawaban (kana・romaji OK)" autocomplete="off" autofocus>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="checkAnswer()">答え合わせ / Check</button>
         <button class="btn btn-secondary" onclick="showHint()">💡 ヒント</button>
@@ -7650,8 +7650,7 @@ function checkAnswer() {
   // Pool both kanji answers and kana answers as acceptable
   const allAnswers = [...(q.a || [])];
   if (q.aKana) allAnswers.push(...q.aKana);
-  const acceptableAnswers = allAnswers.map(a => normalize(a));
-  const isCorrect = acceptableAnswers.includes(userAns);
+  const isCorrect = answerMatches(input.value, allAnswers);
 
   // Show kanji version as the "official" answer in feedback
   showFeedback(isCorrect, q.a[0], q.hint, q.aKana ? q.aKana[0] : null);
@@ -7872,7 +7871,7 @@ function renderConjugationMode() {
         ${v.meaning ? `<div class="explain-id" style="margin-top:6px; font-size:0.85em;">📖 ${v.meaning}</div>` : ""}
         ${v.note ? `<div class="hint" style="margin-top: 8px;">⚠️ ${v.note}</div>` : ""}
       </div>
-      <input type="text" class="answer-input" id="conj-input" placeholder="${formInfo.label}を入力 (漢字・ひらがなどちらもOK)" autocomplete="off" autofocus>
+      <input type="text" class="answer-input" id="conj-input" placeholder="${formInfo.label}を入力 (漢字・ひらがな・ローマ字OK)" autocomplete="off" autofocus>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="checkConjAnswer()"><ruby>答<rt>こた</rt></ruby>え<ruby>合<rt>あ</rt></ruby>わせ</button>
       </div>
@@ -7962,6 +7961,87 @@ function startConjQuiz(form, filter) {
   renderConjugationMode();
 }
 
+
+// =========================================================
+// ローマ字 → ひらがな（活用形マスターの答え合わせ用）
+// ヘボン式・訓令式のどちらでも受け付ける
+// =========================================================
+const ROMAJI_MAP = {
+  a:"あ", i:"い", u:"う", e:"え", o:"お",
+  ka:"か", ki:"き", ku:"く", ke:"け", ko:"こ",
+  ga:"が", gi:"ぎ", gu:"ぐ", ge:"げ", go:"ご",
+  sa:"さ", shi:"し", si:"し", su:"す", se:"せ", so:"そ",
+  za:"ざ", ji:"じ", zi:"じ", zu:"ず", ze:"ぜ", zo:"ぞ",
+  ta:"た", chi:"ち", ti:"ち", tsu:"つ", tu:"つ", te:"て", to:"と",
+  da:"だ", di:"ぢ", du:"づ", de:"で", do:"ど",
+  na:"な", ni:"に", nu:"ぬ", ne:"ね", no:"の",
+  ha:"は", hi:"ひ", fu:"ふ", hu:"ふ", he:"へ", ho:"ほ",
+  ba:"ば", bi:"び", bu:"ぶ", be:"べ", bo:"ぼ",
+  pa:"ぱ", pi:"ぴ", pu:"ぷ", pe:"ぺ", po:"ぽ",
+  ma:"ま", mi:"み", mu:"む", me:"め", mo:"も",
+  ya:"や", yu:"ゆ", yo:"よ",
+  ra:"ら", ri:"り", ru:"る", re:"れ", ro:"ろ",
+  wa:"わ", wo:"を", nn:"ん",
+  kya:"きゃ", kyu:"きゅ", kyo:"きょ", gya:"ぎゃ", gyu:"ぎゅ", gyo:"ぎょ",
+  sha:"しゃ", shu:"しゅ", sho:"しょ", sya:"しゃ", syu:"しゅ", syo:"しょ",
+  ja:"じゃ", ju:"じゅ", jo:"じょ", jya:"じゃ", jyu:"じゅ", jyo:"じょ",
+  zya:"じゃ", zyu:"じゅ", zyo:"じょ",
+  cha:"ちゃ", chu:"ちゅ", cho:"ちょ", tya:"ちゃ", tyu:"ちゅ", tyo:"ちょ",
+  nya:"にゃ", nyu:"にゅ", nyo:"にょ",
+  hya:"ひゃ", hyu:"ひゅ", hyo:"ひょ", bya:"びゃ", byu:"びゅ", byo:"びょ",
+  pya:"ぴゃ", pyu:"ぴゅ", pyo:"ぴょ", mya:"みゃ", myu:"みゅ", myo:"みょ",
+  rya:"りゃ", ryu:"りゅ", ryo:"りょ",
+  fa:"ふぁ", fi:"ふぃ", fe:"ふぇ", fo:"ふぉ",
+  she:"しぇ", che:"ちぇ", je:"じぇ",
+  xtu:"っ", ltu:"っ", xa:"ぁ", xi:"ぃ", xu:"ぅ", xe:"ぇ", xo:"ぉ",
+  la:"ぁ", li:"ぃ", lu:"ぅ", le:"ぇ", lo:"ぉ"
+};
+
+function katakanaToHiragana(s) {
+  return String(s).replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
+function romajiToKana(input) {
+  let s = String(input).toLowerCase().replace(/[\s\-_]/g, "");
+  s = s.replace(/ā/g, "aa").replace(/ī/g, "ii").replace(/ū/g, "uu")
+       .replace(/ē/g, "ee").replace(/ō/g, "ou").replace(/â/g, "aa").replace(/ô/g, "ou");
+  let out = "", i = 0;
+  while (i < s.length) {
+    const c = s[i], nxt = s[i + 1];
+    // 「ん」
+    if (c === "n") {
+      if (nxt === "'") { out += "ん"; i += 2; continue; }
+      if (nxt === "n") {
+        // onna → おんな のように、2つ目の n は次のかなの一部になることがある
+        const after = s[i + 2];
+        if (after && "aiueoy".indexOf(after) !== -1) { out += "ん"; i += 1; continue; }
+        out += "ん"; i += 2; continue;
+      }
+      if (!nxt || "aiueoy".indexOf(nxt) === -1) { out += "ん"; i += 1; continue; }
+    }
+    // 促音「っ」
+    if (c === "t" && nxt === "c" && s[i + 2] === "h") { out += "っ"; i += 1; continue; }
+    if (c === nxt && "aiueon".indexOf(c) === -1) { out += "っ"; i += 1; continue; }
+    let hit = null;
+    for (let L = 3; L >= 1; L--) {
+      const seg = s.substr(i, L);
+      if (ROMAJI_MAP[seg]) { hit = seg; break; }
+    }
+    if (hit) { out += ROMAJI_MAP[hit]; i += hit.length; }
+    else { out += c; i += 1; }   // 変換できない文字はそのまま残す
+  }
+  return out;
+}
+
+// ひらがな・カタカナ・ローマ字のどれで打っても受け付ける共通の判定
+function answerMatches(userRaw, acceptedList) {
+  const raw = String(userRaw == null ? "" : userRaw).trim();
+  if (!raw) return false;
+  const cand = [normalize(raw), normalize(katakanaToHiragana(raw))];
+  if (/^[a-zA-Zāīūēōâô'\-\s_]+$/.test(raw)) cand.push(normalize(romajiToKana(raw)));
+  return acceptedList.some(a => a && cand.indexOf(normalize(a)) !== -1);
+}
+
 function checkConjAnswer() {
   if (conjState.answered) return;
   const input = document.getElementById("conj-input");
@@ -7972,8 +8052,7 @@ function checkConjAnswer() {
   const form = item.form;
   const targetKanji = v[form];
   const targetKana = v[form + "Kana"];
-  const acceptable = [normalize(targetKanji), normalize(targetKana)];
-  const isCorrect = acceptable.includes(userAns);
+  const isCorrect = answerMatches(input.value, [targetKanji, targetKana]);
   const fb = document.getElementById("feedback");
   fb.className = `feedback show ${isCorrect ? "correct" : "incorrect"}`;
   const answerDisplay = (targetKanji === targetKana)
@@ -9119,7 +9198,7 @@ function renderKanjiQuizInput() {
   const fullReading = word.r + wOkuri;  // e.g. いわう
   // Accept either reading alone or reading+okurigana as correct
   const userAns = kanjiState.userInput.trim();
-  const isCorrect = userAns === word.r || (wOkuri && userAns === fullReading);
+  const isCorrect = answerMatches(userAns, [word.r, wOkuri ? fullReading : null]);
   // For the "correct answer" hint, show full form (more pedagogically useful)
   const correctAnswerDisplay = wOkuri
     ? `${escapeHtml(fullReading)} <span style="font-size:0.85em; color:#718096;">(または / atau: ${escapeHtml(word.r)})</span>`
@@ -9141,7 +9220,7 @@ function renderKanjiQuizInput() {
         <div class="explain-id">${escapeHtml(word.item.id)}</div>
       </div>
       <div class="kanji-input-area">
-        <input type="text" id="kanji-input-field" class="kanji-input" placeholder="ひらがな..." 
+        <input type="text" id="kanji-input-field" class="kanji-input" placeholder="かな・ローマ字" 
           value="${escapeHtml(kanjiState.userInput)}"
           ${kanjiState.answered ? 'disabled' : ''}
           oninput="kanjiState.userInput = this.value"
@@ -9181,7 +9260,7 @@ function submitKanjiInput() {
   const okuri = KANJI_OKURIGANA[word.k + ":" + word.r] || "";
   const fullReading = word.r + okuri;
   // Accept either the base reading OR reading+okurigana
-  const isCorrect = ans === word.r || (okuri && ans === fullReading);
+  const isCorrect = answerMatches(ans, [word.r, okuri ? fullReading : null]);
   kanjiState.answered = true;
   if (!kanjiAnsweredIdx.has(kanjiState.idx)) {
     kanjiAnsweredIdx.add(kanjiState.idx);
@@ -9224,7 +9303,7 @@ function renderKanjiContext() {
       const showResult = kanjiState.answered;
       let cls = 'context-target';
       if (showResult) {
-        cls += userR === p.r ? ' correct' : ' incorrect';
+        cls += answerMatches(userR, [p.r, (KANJI_OKURIGANA[p.k + ':' + p.r] || '') ? p.r + KANJI_OKURIGANA[p.k + ':' + p.r] : null]) ? ' correct' : ' incorrect';
       }
       sentHtml += `<span class="${cls}"><ruby>${escapeHtml(p.k)}<rt>${showResult ? escapeHtml(p.r) : ''}</rt></ruby><sup class="label-sup">(${p.label})</sup></span>`;
     } else {
@@ -9243,7 +9322,7 @@ function renderKanjiContext() {
     let inputCls = 'context-input';
     let resultMark = '';
     if (showResult) {
-      const correct = userR.trim() === t.r || (okuri && userR.trim() === fullReading);
+      const correct = answerMatches(userR, [t.r, okuri ? fullReading : null]);
       inputCls += correct ? ' correct' : ' incorrect';
       // For the "correct answer" display, show full form so learners see okurigana
       resultMark = correct ? '✅' : `❌ → <strong>${escapeHtml(fullReading)}</strong>`;
@@ -9251,7 +9330,7 @@ function renderKanjiContext() {
     inputsHtml += `
       <div class="context-input-row">
         <label class="context-label" for="ctxin-${kanjiState.lesson}-${kanjiState.idx}-${t.label}">(${t.label})</label>
-        <input type="text" class="${inputCls}" placeholder="ひらがな"
+        <input type="text" class="${inputCls}" placeholder="かな・ローマ字"
           id="ctxin-${kanjiState.lesson}-${kanjiState.idx}-${t.label}"
           name="ctxin-${kanjiState.lesson}-${kanjiState.idx}-${t.label}"
           data-label="${t.label}"
@@ -9329,7 +9408,7 @@ function submitContextAnswers() {
     const okuri = KANJI_OKURIGANA[t.k + ":" + t.r] || "";
     const fullReading = t.r + okuri;
     // Accept base reading OR reading + okurigana
-    const isCorrect = userR === t.r || (okuri && userR === fullReading);
+    const isCorrect = answerMatches(userR, [t.r, okuri ? fullReading : null]);
     if (isCorrect) correctCount++;
     // Record each kanji for review system
     recordAnswer(kanjiQid(kanjiState.lesson, t.label), isCorrect, {
@@ -9766,8 +9845,7 @@ function answerReviewGrammarInput() {
   const userAns = normalize(reviewState.userInput);
   const allAnswers = [...(q.a || [])];
   if (q.aKana) allAnswers.push(...q.aKana);
-  const acceptable = allAnswers.map(a => normalize(a));
-  const isCorrect = acceptable.includes(userAns) && userAns !== "";
+  const isCorrect = answerMatches(reviewState.userInput, allAnswers);
   reviewState._lastInputCorrect = isCorrect;
   reviewState.answered = true;
   if (!reviewAnsweredIdx.has(reviewState.idx)) {
@@ -9788,7 +9866,7 @@ function renderReviewKanjiQ(resolved, header) {
     : escapeHtml(word.k);
   const fullReading = word.r + wOkuri;
   const userAns = reviewState.userInput.trim();
-  const isCorrect = userAns === word.r || (wOkuri && userAns === fullReading);
+  const isCorrect = answerMatches(userAns, [word.r, wOkuri ? fullReading : null]);
   const correctAnswerDisplay = wOkuri
     ? `${escapeHtml(fullReading)} <span style="font-size:0.85em; color:#718096;">(または / atau: ${escapeHtml(word.r)})</span>`
     : escapeHtml(word.r);
@@ -9818,7 +9896,7 @@ function renderReviewKanjiQ(resolved, header) {
         <div class="explain-id">${escapeHtml(word.item.id)}</div>
       </div>
       <div class="kanji-input-area">
-        <input type="text" id="review-input-field" class="kanji-input" placeholder="ひらがな..."
+        <input type="text" id="review-input-field" class="kanji-input" placeholder="かな・ローマ字"
           value="${escapeHtml(reviewState.userInput)}"
           ${reviewState.answered ? 'disabled' : ''}
           oninput="reviewState.userInput = this.value"
@@ -9844,7 +9922,7 @@ function answerReviewKanji() {
   const okuri = KANJI_OKURIGANA[word.k + ":" + word.r] || "";
   const fullReading = word.r + okuri;
   const ans = reviewState.userInput.trim();
-  const isCorrect = ans === word.r || (okuri && ans === fullReading);
+  const isCorrect = answerMatches(ans, [word.r, okuri ? fullReading : null]);
   reviewState.answered = true;
   if (!reviewAnsweredIdx.has(reviewState.idx)) {
     reviewAnsweredIdx.add(reviewState.idx);
