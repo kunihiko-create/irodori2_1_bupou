@@ -856,6 +856,18 @@
   }
 
 
+  .conj-meaning {
+    margin-top: 10px;
+    display: inline-block;
+    background: #f0f7fb;
+    border-left: 3px solid #4a90c2;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 0.92em;
+    color: #1e3a5f;
+    font-style: italic;
+  }
+
   /* ===== PASSWORD GATE ===== */
   .lock-screen {
     position: fixed;
@@ -7868,7 +7880,7 @@ function renderConjugationMode() {
         <div style="margin-top:6px; font-size:0.9em; color:#4a90c2;">
           【${formInfo.label}】
         </div>
-        ${v.meaning ? `<div class="explain-id" style="margin-top:6px; font-size:0.85em;">📖 ${v.meaning}</div>` : ""}
+        ${v.meaning ? `<div class="conj-meaning">🇮🇩 ${v.meaning}</div>` : ""}
         ${v.note ? `<div class="hint" style="margin-top: 8px;">⚠️ ${v.note}</div>` : ""}
       </div>
       <input type="text" class="answer-input" id="conj-input" placeholder="${formInfo.label}を入力 (漢字・ひらがな・ローマ字OK)" autocomplete="off" autofocus>
@@ -8787,34 +8799,75 @@ function escapeHtml(s) {
 
 // Generate distractor readings (wrong answers) for multiple choice
 // Pool from other lessons + same-lesson kanji
-function generateDistractorReadings(correctReading, lessonNum) {
-  const pool = new Set();
-  // Add readings from same lesson
-  const sameLesson = getKanjiWordsForLesson(lessonNum);
-  sameLesson.forEach(w => {
-    if (w.r !== correctReading && w.r.length >= 2) pool.add(w.r);
-  });
-  // Add readings from other lessons
-  for (const ln of Object.keys(KANJI_DATA)) {
-    if (ln === String(lessonNum)) continue;
-    getKanjiWordsForLesson(ln).forEach(w => {
-      if (w.r !== correctReading && w.r.length >= 2) pool.add(w.r);
+
+// =========================================================
+// 漢字4択のダミー読み
+//   A: その語で間違えやすい読み（音訓の取りちがえなど）
+//   B: 形の似た漢字の読み（1字の語のとき）
+//   C: 音の似た読み（濁点・長音・促音・撥音）
+// =========================================================
+const KANJI_TRAP_READINGS = {"人:ひと": ["じん", "にん"], "犬:いぬ": ["けん"], "秋:あき": ["しゅう"], "春:はる": ["しゅん"], "花:はな": ["か"], "夏:なつ": ["か", "げ"], "冬:ふゆ": ["とう"], "雨:あめ": ["う"], "風:かぜ": ["ふう"], "雪:ゆき": ["せつ"], "今:いま": ["こん"], "町:まち": ["ちょう"], "店:みせ": ["てん"], "店:てん": ["みせ"], "道:みち": ["どう"], "右:みぎ": ["ゆう", "う"], "左:ひだり": ["さ"], "車:くるま": ["しゃ"], "寺:てら": ["じ"], "門:もん": ["かど"], "金:かね": ["きん"], "回:かい": ["まわ"], "茶:ちゃ": ["さ"], "酒:さけ": ["しゅ"], "湯:ゆ": ["とう"], "味:あじ": ["み"], "機:き": ["はた"], "音:おと": ["おん"], "別:べつ": ["わか"], "熱:ねつ": ["あつ"], "足:あし": ["そく"], "耳:みみ": ["じ"], "口:くち": ["こう", "く"], "顔:かお": ["がん"], "手:て": ["しゅ"], "目:め": ["もく"], "兄:あに": ["けい", "にい"], "兄:にい": ["あに", "けい"], "姉:あね": ["し", "ねえ"], "姉:ねえ": ["あね", "し"], "妻:つま": ["さい"], "男:おとこ": ["だん", "なん"], "女:おんな": ["じょ", "にょ"], "弟:おとうと": ["てい", "だい"], "妹:いもうと": ["まい"], "父:とう": ["ちち", "ふ"], "母:かあ": ["はは", "ぼ"], "薬:くすり": ["やく"], "体:からだ": ["たい"], "頭:あたま": ["とう", "ず"], "卵:たまご": ["らん"], "机:つくえ": ["き"], "働:はたら": ["どう"], "作:つく": ["さく"], "忙:いそが": ["ぼう"], "話:はな": ["わ"], "習:なら": ["しゅう"], "出:で": ["しゅつ"], "暑:あつ": ["しょ"], "同:おな": ["どう"], "寒:さむ": ["かん"], "強:つよ": ["きょう"], "晴:は": ["せい"], "多:おお": ["た"], "少:すく": ["しょう"], "遠:とお": ["えん"], "静:しず": ["せい"], "送:おく": ["そう"], "近:ちか": ["きん"], "着:つ": ["ちゃく"], "待:ま": ["たい"], "止:と": ["し"], "急:いそ": ["きゅう"], "登:のぼ": ["とう"], "楽:たの": ["らく", "がく"], "難:むずか": ["なん"], "言:い": ["げん"], "書:か": ["しょ"], "貸:か": ["たい"], "教:おし": ["きょう"], "飲:の": ["いん"], "持:も": ["じ"], "売:う": ["ばい"], "甘:あま": ["かん"], "辛:から": ["しん"], "食:た": ["しょく"], "使:つか": ["し"], "動:うご": ["どう"], "終:お": ["しゅう"], "願:ねが": ["がん"], "悪:わる": ["あく"], "吸:す": ["きゅう"], "伝:つた": ["でん"], "早:はや": ["そう"], "帰:かえ": ["き"], "取:と": ["しゅ"], "痛:いた": ["つう"], "眠:ねむ": ["みん"], "寝:ね": ["しん"], "起:お": ["き"], "歩:ある": ["ほ"], "走:はし": ["そう"], "選:えら": ["せん"], "祝:いわ": ["しゅく"], "思:おも": ["し"], "幸:しあわ": ["こう"], "生:う": ["せい", "なま"], "元気:げんき": ["もとき"], "生活:せいかつ": ["しょうかつ", "なまかつ"], "学生:がくせい": ["がくしょう"], "仕事:しごと": ["しじ"], "先週:せんしゅう": ["さきしゅう"], "英語:えいご": ["えいかた"], "音楽:おんがく": ["ねがく", "おんらく"], "家族:かぞく": ["いえぞく"], "4人:よにん": ["よんにん", "しにん"], "夕方:ゆうがた": ["ゆうほう"], "夫:おっと": ["ふう"], "季節:きせつ": ["きぶし"], "天気:てんき": ["あまき"], "昨日:きのう": ["さくじつ"], "明日:あした": ["みょうにち"], "毎日:まいにち": ["まいひ"], "食堂:しょくどう": ["たべどう"], "有名:ゆうめい": ["ゆうな"], "便利:べんり": ["びんり"], "不便:ふべん": ["ふびん"], "銀行:ぎんこう": ["ぎんぎょう"], "公園:こうえん": ["こうその"], "神社:じんじゃ": ["かみしゃ"], "場所:ばしょ": ["じょうしょ"], "受付:うけつけ": ["じゅふ"], "電車:でんしゃ": ["でんくるま"], "時間:じかん": ["ときま"], "博物館:はくぶつかん": ["はくもつかん"], "動物園:どうぶつえん": ["どうもつえん"], "試合:しあい": ["しごう"], "食事:しょくじ": ["しょくごと"], "練習:れんしゅう": ["ねりしゅう"], "高校:こうこう": ["たかこう"], "大学:だいがく": ["たいがく"], "漢字:かんじ": ["かんし"], "説明:せつめい": ["せつみょう"], "無料:むりょう": ["ぶりょう"], "全部:ぜんぶ": ["ぜんぶん"], "用意:ようい": ["よういみ"], "午前:ごぜん": ["ごまえ"], "午後:ごご": ["ごあと"], "教科書:きょうかしょ": ["きょうかがき"], "先生:せんせい": ["さきせい"], "教室:きょうしつ": ["きょうむろ"], "参加:さんか": ["さんくわ"], "豚肉:ぶたにく": ["とんにく"], "材料:ざいりょう": ["さいりょう"], "牛肉:ぎゅうにく": ["うしにく"], "野菜:やさい": ["のさい"], "調理:ちょうり": ["しらべり"], "苦手:にがて": ["くしゅ", "くて"], "電気:でんき": ["でんけ"], "数字:すうじ": ["かずじ"], "都合:つごう": ["とごう", "みやこあい"], "用事:ようじ": ["ようこと"], "氏名:しめい": ["しな"], "連絡先:れんらくさき": ["れんらくせん"], "理由:りゆう": ["りよし"], "病院:びょういん": ["びょうえん"], "医者:いしゃ": ["いもの"], "病気:びょうき": ["やまいき"], "住所:じゅうしょ": ["すみしょ"], "記入:きにゅう": ["きいり"], "運動:うんどう": ["うんうご"], "両親:りょうしん": ["りょうおや"], "合格:ごうかく": ["あいかく"], "結婚:けっこん": ["ゆいこん"], "誕生日:たんじょうび": ["たんせいび"], "時計:とけい": ["じけい"], "学校:がっこう": ["がくこう"], "去年:きょねん": ["さくねん"], "料理:りょうり": ["りょうことわり"]};
+const KANJI_LOOKALIKE_READINGS = {"待": ["も", "じ", "てら"], "持": ["ま", "じ", "てら"], "寺": ["じ", "も", "ま"], "生": ["ぎゅう", "うし", "ご"], "牛": ["う", "なま", "ご"], "午": ["ぎゅう", "うし"], "使": ["べん", "たより"], "便": ["つか", "し"], "作": ["きのう", "さく"], "才": ["ざい", "き"], "楽": ["くすり", "やく"], "薬": ["たの", "らく", "がく"], "場": ["ゆ", "とう"], "湯": ["ば", "じょう"], "顔": ["ねが", "あたま", "ず"], "願": ["かお", "あたま"], "頭": ["かお", "ねが", "がん"], "姉": ["いもうと", "まい"], "妹": ["あね", "し", "ねえ"], "男": ["おんな", "じょ"], "女": ["おとこ", "だん"], "遠": ["えん", "その"], "送": ["えら", "せん"], "選": ["おく", "そう"], "起": ["はし", "そう"], "走": ["お", "き"], "口": ["かい", "まわ"], "回": ["くち", "こう"], "母": ["まい", "ごと"], "電": ["ゆき", "あめ", "せつ"], "雪": ["でん", "あめ", "う"], "雨": ["ゆき", "でん", "せつ"], "話": ["ご", "かた"], "言": ["はな", "ご", "わ"], "金": ["ぜん", "すべ"], "犬": ["だい", "たい", "おお"], "食": ["の", "いん"], "飲": ["た", "しょく"], "車": ["こと", "じ"], "夫": ["てん", "あま"], "手": ["もう", "け"], "目": ["じ", "みずか"]};
+
+const KANJI_GROUPS = [["春:はる", "夏:なつ", "秋:あき", "冬:ふゆ"], ["雨:あめ", "風:かぜ", "雪:ゆき", "晴:は"], ["目:め", "耳:みみ", "口:くち", "手:て", "足:あし", "顔:かお", "頭:あたま", "体:からだ"], ["兄:あに", "姉:あね", "弟:おとうと", "妹:いもうと", "妻:つま", "父:とう", "母:かあ"], ["右:みぎ", "左:ひだり"], ["男:おとこ", "女:おんな"], ["暑:あつ", "寒:さむ", "強:つよ", "多:おお", "少:すく", "遠:とお", "近:ちか", "早:はや", "悪:わる", "甘:あま", "辛:から", "痛:いた", "眠:ねむ", "忙:いそが", "難:むずか", "楽:たの", "静:しず", "同:おな"], ["出:で", "着:つ", "止:と", "急:いそ", "登:のぼ", "帰:かえ", "走:はし", "歩:ある", "起:お", "寝:ね", "動:うご", "送:おく"], ["言:い", "話:はな", "書:か", "教:おし", "習:なら", "伝:つた", "思:おも", "願:ねが"], ["食:た", "飲:の", "作:つく", "売:う", "働:はたら"], ["持:も", "取:と", "貸:か", "使:つか", "待:ま", "選:えら", "吸:す", "終:お", "祝:いわ"], ["町:まち", "店:みせ", "道:みち", "寺:てら", "門:もん", "駅:えき"], ["金:かね", "車:くるま", "犬:いぬ", "花:はな", "茶:ちゃ", "皿:さら", "酒:さけ", "湯:ゆ", "薬:くすり", "卵:たまご", "机:つくえ", "音:おと", "味:あじ", "熱:ねつ", "機:き", "才:さい", "別:べつ", "回:かい", "今:いま"]];
+
+const DAKUTEN = {"か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ",
+  "た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ"};
+const SEION = {};
+Object.keys(DAKUTEN).forEach(k => { SEION[DAKUTEN[k]] = k; });
+
+// 音が似ているだけの読みを作る（濁点・長音・促音・「ん」）
+function similarSoundReadings(r) {
+  const v = [];
+  for (let i = 0; i < Math.min(2, r.length); i++) {
+    const c = r[i];
+    if (DAKUTEN[c]) v.push(r.slice(0, i) + DAKUTEN[c] + r.slice(i + 1));
+    if (SEION[c]) v.push(r.slice(0, i) + SEION[c] + r.slice(i + 1));
+  }
+  if (r.length > 2 && r.slice(-1) === "う") v.push(r.slice(0, -1));
+  if ("おこそとのほもよろごぞどぼぽょ".indexOf(r.slice(-1)) !== -1) v.push(r + "う");
+  if ("えけせてねへめれげぜでべぺ".indexOf(r.slice(-1)) !== -1) v.push(r + "い");
+  if (r.indexOf("っ") !== -1) v.push(r.replace("っ", ""));
+  if (r.indexOf("ん") !== -1) v.push(r.replace("ん", ""));
+  if (r.indexOf("ゅ") !== -1) v.push(r.replace("ゅ", "ゆ"));
+  if (r.indexOf("ょ") !== -1) v.push(r.replace("ょ", "よ"));
+  return v.filter(x => x.length >= 2 && x !== r);
+}
+
+function generateDistractorReadings(word, lessonNum) {
+  const r = typeof word === "string" ? word : word.r;
+  const k = typeof word === "string" ? "" : word.k;
+  const out = [];
+  const push = x => { if (x && x !== r && out.indexOf(x) === -1) out.push(x); };
+
+  // A: その語で間違えやすい読み
+  (KANJI_TRAP_READINGS[k + ":" + r] || []).forEach(push);
+  // B: 形の似た漢字の読み（1字の語のとき）
+  if (k.length === 1) (KANJI_LOOKALIKE_READINGS[k] || []).forEach(push);
+  // B2: 意味の似た仲間のことばの読み（春/夏/秋/冬、目/耳/口 など）
+  if (out.length < 3 && k) {
+    const key = k + ":" + r;
+    KANJI_GROUPS.forEach(g => {
+      if (g.indexOf(key) === -1) return;
+      shuffleArray(g).forEach(m => { if (m !== key) push(m.split(":")[1]); });
     });
   }
-  // Prefer similar-length distractors
-  const candidates = [...pool].sort((a, b) => {
-    const da = Math.abs(a.length - correctReading.length);
-    const db = Math.abs(b.length - correctReading.length);
-    return da - db;
-  });
-  // Take top similar-length, shuffle, take 3
-  const topN = candidates.slice(0, Math.min(20, candidates.length));
-  // shuffle
-  for (let i = topN.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [topN[i], topN[j]] = [topN[j], topN[i]];
+  // C: 音の似た読み
+  if (out.length < 3) shuffleArray(similarSoundReadings(r)).forEach(push);
+
+  // それでも足りなければ、ほかの語の読みから（長さの近いもの）
+  if (out.length < 3) {
+    const pool = new Set();
+    for (const ln of Object.keys(KANJI_DATA)) {
+      getKanjiWordsForLesson(ln).forEach(w => {
+        if (w.r !== r && w.r.length >= 2) pool.add(w.r);
+      });
+    }
+    const cands = [...pool].sort((a, b) =>
+      Math.abs(a.length - r.length) - Math.abs(b.length - r.length));
+    shuffleArray(cands.slice(0, 20)).forEach(push);
   }
-  return topN.slice(0, 3);
+  return out.slice(0, 3);
 }
 
 function shuffleArray(arr) {
@@ -9079,7 +9132,7 @@ function renderKanjiQuizChoice() {
   
   // Generate choices once per question (cached on kanjiState.answered transition)
   if (!kanjiState.answered && _currentQuizChoices === null) {
-    const distractors = generateDistractorReadings(word.r, kanjiState.lesson);
+    const distractors = generateDistractorReadings(word, kanjiState.lesson);
     // Pick a balanced position for the correct answer to avoid clustering
     const correctPos = pickBalancedCorrectPosition();
     // Shuffle distractors and place correct answer at chosen position
