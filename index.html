@@ -856,6 +856,13 @@
   }
 
 
+  .kanji-meaning {
+    margin-top: 8px;
+    font-size: 0.95em;
+    color: #1e3a5f;
+    font-style: italic;
+  }
+
   .conj-meaning {
     margin-top: 10px;
     display: inline-block;
@@ -8806,6 +8813,8 @@ function escapeHtml(s) {
 //   B: 形の似た漢字の読み（1字の語のとき）
 //   C: 音の似た読み（濁点・長音・促音・撥音）
 // =========================================================
+const KANJI_WORD_MEANING = {"元気:げんき": "sehat; kabar baik", "去年:きょねん": "tahun lalu", "生活:せいかつ": "kehidupan", "働:はたら": "bekerja（働く）", "学生:がくせい": "pelajar; mahasiswa", "学校:がっこう": "sekolah", "作:つく": "membuat（作る）", "仕事:しごと": "pekerjaan", "先週:せんしゅう": "minggu lalu", "忙:いそが": "sibuk（忙しい）", "英語:えいご": "bahasa Inggris", "人:ひと": "orang", "話:はな": "berbicara（話す）", "音楽:おんがく": "musik", "習:なら": "belajar; berlatih（習う）", "家族:かぞく": "keluarga", "4人:よにん": "4 orang", "犬:いぬ": "anjing", "夕方:ゆうがた": "sore", "出:で": "keluar; berangkat（出る）", "夫:おっと": "suami", "秋:あき": "musim gugur", "春:はる": "musim semi", "花:はな": "bunga", "暑:あつ": "panas (cuaca)（暑い）", "夏:なつ": "musim panas", "季節:きせつ": "musim", "同:おな": "sama（同じ）", "冬:ふゆ": "musim dingin", "寒:さむ": "dingin (cuaca)（寒い）", "毎日:まいにち": "setiap hari", "雨:あめ": "hujan", "天気:てんき": "cuaca", "昨日:きのう": "kemarin", "風:かぜ": "angin", "強:つよ": "kuat; kencang（強い）", "明日:あした": "besok", "雪:ゆき": "salju", "晴:は": "cerah（晴れる）", "今:いま": "sekarang", "食堂:しょくどう": "kantin; rumah makan", "有名:ゆうめい": "terkenal", "町:まち": "kota", "店:みせ": "toko", "多:おお": "banyak（多い）", "便利:べんり": "praktis; nyaman", "少:すく": "sedikit（少ない）", "不便:ふべん": "tidak praktis", "遠:とお": "jauh（遠い）", "静:しず": "tenang（静か）", "銀行:ぎんこう": "bank", "道:みち": "jalan", "左:ひだり": "kiri", "右:みぎ": "kanan", "車:くるま": "mobil", "送:おく": "mengantar; mengirim（送る）", "公園:こうえん": "taman", "近:ちか": "dekat（近い）", "神社:じんじゃ": "kuil Shinto", "寺:てら": "kuil Buddha", "駅:えき": "stasiun", "着:つ": "tiba; sampai（着く）", "場所:ばしょ": "tempat", "門:もん": "gerbang", "待:ま": "menunggu（待つ）", "受付:うけつけ": "resepsionis; meja penerima", "電車:でんしゃ": "kereta", "止:と": "berhenti（止まる）", "時間:じかん": "waktu; jam", "急:いそ": "bergegas; buru-buru（急ぐ）", "登:のぼ": "mendaki; naik（登る）", "博物館:はくぶつかん": "museum", "動物園:どうぶつえん": "kebun binatang", "楽:たの": "menyenangkan（楽しい）", "難:むずか": "sulit（難しい）", "店:てん": "toko (dalam kata gabungan)", "試合:しあい": "pertandingan", "食事:しょくじ": "makan; santapan", "金:かね": "uang", "練習:れんしゅう": "latihan", "高校:こうこう": "SMA", "大学:だいがく": "universitas", "言:い": "mengatakan（言う）", "漢字:かんじ": "kanji", "書:か": "menulis（書く）", "貸:か": "meminjamkan（貸す）", "説明:せつめい": "penjelasan", "無料:むりょう": "gratis", "教:おし": "mengajar; memberitahu（教える）", "全部:ぜんぶ": "semua; seluruhnya", "回:かい": "kali (satuan)", "用意:ようい": "persiapan", "午前:ごぜん": "pagi (sebelum tengah hari)", "午後:ごご": "siang; sore (setelah tengah hari)", "教科書:きょうかしょ": "buku pelajaran", "先生:せんせい": "guru", "教室:きょうしつ": "ruang kelas", "参加:さんか": "ikut serta", "豚肉:ぶたにく": "daging babi", "飲:の": "minum（飲む）", "茶:ちゃ": "teh", "皿:さら": "piring", "持:も": "membawa; memegang（持つ）", "材料:ざいりょう": "bahan", "牛肉:ぎゅうにく": "daging sapi", "野菜:やさい": "sayuran", "酒:さけ": "minuman beralkohol; sake", "売:う": "menjual（売る）", "調理:ちょうり": "memasak; pengolahan", "湯:ゆ": "air panas", "料理:りょうり": "masakan", "卵:たまご": "telur", "甘:あま": "manis（甘い）", "苦手:にがて": "tidak suka; tidak pandai", "味:あじ": "rasa", "辛:から": "pedas（辛い）", "食:た": "makan（食べる）", "電気:でんき": "listrik; lampu", "机:つくえ": "meja", "使:つか": "memakai（使う）", "数字:すうじ": "angka", "機:き": "mesin（コピー機）", "動:うご": "bergerak; berfungsi（動く）", "終:お": "selesai（終わる）", "願:ねが": "memohon（お願いする）", "都合:つごう": "situasi; keadaan (waktu)", "悪:わる": "buruk（悪い）", "音:おと": "suara; bunyi", "吸:す": "menghisap; merokok（吸う）", "伝:つた": "menyampaikan（伝える）", "用事:ようじ": "urusan; keperluan", "早:はや": "awal; cepat（早い）", "帰:かえ": "pulang（帰る）", "別:べつ": "lain; berbeda", "取:と": "mengambil（取る）", "氏名:しめい": "nama lengkap", "連絡先:れんらくさき": "kontak", "理由:りゆう": "alasan", "痛:いた": "sakit（痛い）", "病院:びょういん": "rumah sakit", "熱:ねつ": "demam", "才:さい": "tahun (umur)", "医者:いしゃ": "dokter", "病気:びょうき": "penyakit", "住所:じゅうしょ": "alamat", "記入:きにゅう": "pengisian (formulir)", "薬:くすり": "obat", "眠:ねむ": "mengantuk（眠い）", "寝:ね": "tidur（寝る）", "足:あし": "kaki", "耳:みみ": "telinga", "起:お": "bangun（起きる）", "体:からだ": "badan", "頭:あたま": "kepala", "口:くち": "mulut", "歩:ある": "berjalan（歩く）", "走:はし": "berlari（走る）", "運動:うんどう": "olahraga", "顔:かお": "wajah", "手:て": "tangan", "目:め": "mata", "兄:にい": "kakak laki-laki（お兄さん）", "弟:おとうと": "adik laki-laki", "妹:いもうと": "adik perempuan", "両親:りょうしん": "orang tua", "兄:あに": "kakak laki-laki (saya)", "姉:あね": "kakak perempuan (saya)", "姉:ねえ": "kakak perempuan（お姉さん）", "父:とう": "ayah（お父さん）", "母:かあ": "ibu（お母さん）", "妻:つま": "istri", "合格:ごうかく": "lulus (ujian)", "結婚:けっこん": "pernikahan", "幸:しあわ": "bahagia（幸せ）", "誕生日:たんじょうび": "ulang tahun", "選:えら": "memilih（選ぶ）", "祝:いわ": "merayakan（祝う）", "時計:とけい": "jam tangan; jam", "思:おも": "berpikir（思う）", "生:う": "lahir（生まれる）", "男:おとこ": "laki-laki", "女:おんな": "perempuan"};
+
 const KANJI_TRAP_READINGS = {"人:ひと": ["じん", "にん"], "犬:いぬ": ["けん"], "秋:あき": ["しゅう"], "春:はる": ["しゅん"], "花:はな": ["か"], "夏:なつ": ["か", "げ"], "冬:ふゆ": ["とう"], "雨:あめ": ["う"], "風:かぜ": ["ふう"], "雪:ゆき": ["せつ"], "今:いま": ["こん"], "町:まち": ["ちょう"], "店:みせ": ["てん"], "店:てん": ["みせ"], "道:みち": ["どう"], "右:みぎ": ["ゆう", "う"], "左:ひだり": ["さ"], "車:くるま": ["しゃ"], "寺:てら": ["じ"], "門:もん": ["かど"], "金:かね": ["きん"], "回:かい": ["まわ"], "茶:ちゃ": ["さ"], "酒:さけ": ["しゅ"], "湯:ゆ": ["とう"], "味:あじ": ["み"], "機:き": ["はた"], "音:おと": ["おん"], "別:べつ": ["わか"], "熱:ねつ": ["あつ"], "足:あし": ["そく"], "耳:みみ": ["じ"], "口:くち": ["こう", "く"], "顔:かお": ["がん"], "手:て": ["しゅ"], "目:め": ["もく"], "兄:あに": ["けい", "にい"], "兄:にい": ["あに", "けい"], "姉:あね": ["し", "ねえ"], "姉:ねえ": ["あね", "し"], "妻:つま": ["さい"], "男:おとこ": ["だん", "なん"], "女:おんな": ["じょ", "にょ"], "弟:おとうと": ["てい", "だい"], "妹:いもうと": ["まい"], "父:とう": ["ちち", "ふ"], "母:かあ": ["はは", "ぼ"], "薬:くすり": ["やく"], "体:からだ": ["たい"], "頭:あたま": ["とう", "ず"], "卵:たまご": ["らん"], "机:つくえ": ["き"], "働:はたら": ["どう"], "作:つく": ["さく"], "忙:いそが": ["ぼう"], "話:はな": ["わ"], "習:なら": ["しゅう"], "出:で": ["しゅつ"], "暑:あつ": ["しょ"], "同:おな": ["どう"], "寒:さむ": ["かん"], "強:つよ": ["きょう"], "晴:は": ["せい"], "多:おお": ["た"], "少:すく": ["しょう"], "遠:とお": ["えん"], "静:しず": ["せい"], "送:おく": ["そう"], "近:ちか": ["きん"], "着:つ": ["ちゃく"], "待:ま": ["たい"], "止:と": ["し"], "急:いそ": ["きゅう"], "登:のぼ": ["とう"], "楽:たの": ["らく", "がく"], "難:むずか": ["なん"], "言:い": ["げん"], "書:か": ["しょ"], "貸:か": ["たい"], "教:おし": ["きょう"], "飲:の": ["いん"], "持:も": ["じ"], "売:う": ["ばい"], "甘:あま": ["かん"], "辛:から": ["しん"], "食:た": ["しょく"], "使:つか": ["し"], "動:うご": ["どう"], "終:お": ["しゅう"], "願:ねが": ["がん"], "悪:わる": ["あく"], "吸:す": ["きゅう"], "伝:つた": ["でん"], "早:はや": ["そう"], "帰:かえ": ["き"], "取:と": ["しゅ"], "痛:いた": ["つう"], "眠:ねむ": ["みん"], "寝:ね": ["しん"], "起:お": ["き"], "歩:ある": ["ほ"], "走:はし": ["そう"], "選:えら": ["せん"], "祝:いわ": ["しゅく"], "思:おも": ["し"], "幸:しあわ": ["こう"], "生:う": ["せい", "なま"], "元気:げんき": ["もとき"], "生活:せいかつ": ["しょうかつ", "なまかつ"], "学生:がくせい": ["がくしょう"], "仕事:しごと": ["しじ"], "先週:せんしゅう": ["さきしゅう"], "英語:えいご": ["えいかた"], "音楽:おんがく": ["ねがく", "おんらく"], "家族:かぞく": ["いえぞく"], "4人:よにん": ["よんにん", "しにん"], "夕方:ゆうがた": ["ゆうほう"], "夫:おっと": ["ふう"], "季節:きせつ": ["きぶし"], "天気:てんき": ["あまき"], "昨日:きのう": ["さくじつ"], "明日:あした": ["みょうにち"], "毎日:まいにち": ["まいひ"], "食堂:しょくどう": ["たべどう"], "有名:ゆうめい": ["ゆうな"], "便利:べんり": ["びんり"], "不便:ふべん": ["ふびん"], "銀行:ぎんこう": ["ぎんぎょう"], "公園:こうえん": ["こうその"], "神社:じんじゃ": ["かみしゃ"], "場所:ばしょ": ["じょうしょ"], "受付:うけつけ": ["じゅふ"], "電車:でんしゃ": ["でんくるま"], "時間:じかん": ["ときま"], "博物館:はくぶつかん": ["はくもつかん"], "動物園:どうぶつえん": ["どうもつえん"], "試合:しあい": ["しごう"], "食事:しょくじ": ["しょくごと"], "練習:れんしゅう": ["ねりしゅう"], "高校:こうこう": ["たかこう"], "大学:だいがく": ["たいがく"], "漢字:かんじ": ["かんし"], "説明:せつめい": ["せつみょう"], "無料:むりょう": ["ぶりょう"], "全部:ぜんぶ": ["ぜんぶん"], "用意:ようい": ["よういみ"], "午前:ごぜん": ["ごまえ"], "午後:ごご": ["ごあと"], "教科書:きょうかしょ": ["きょうかがき"], "先生:せんせい": ["さきせい"], "教室:きょうしつ": ["きょうむろ"], "参加:さんか": ["さんくわ"], "豚肉:ぶたにく": ["とんにく"], "材料:ざいりょう": ["さいりょう"], "牛肉:ぎゅうにく": ["うしにく"], "野菜:やさい": ["のさい"], "調理:ちょうり": ["しらべり"], "苦手:にがて": ["くしゅ", "くて"], "電気:でんき": ["でんけ"], "数字:すうじ": ["かずじ"], "都合:つごう": ["とごう", "みやこあい"], "用事:ようじ": ["ようこと"], "氏名:しめい": ["しな"], "連絡先:れんらくさき": ["れんらくせん"], "理由:りゆう": ["りよし"], "病院:びょういん": ["びょうえん"], "医者:いしゃ": ["いもの"], "病気:びょうき": ["やまいき"], "住所:じゅうしょ": ["すみしょ"], "記入:きにゅう": ["きいり"], "運動:うんどう": ["うんうご"], "両親:りょうしん": ["りょうおや"], "合格:ごうかく": ["あいかく"], "結婚:けっこん": ["ゆいこん"], "誕生日:たんじょうび": ["たんせいび"], "時計:とけい": ["じけい"], "学校:がっこう": ["がくこう"], "去年:きょねん": ["さくねん"], "料理:りょうり": ["りょうことわり"]};
 const KANJI_LOOKALIKE_READINGS = {"待": ["も", "じ", "てら"], "持": ["ま", "じ", "てら"], "寺": ["じ", "も", "ま"], "生": ["ぎゅう", "うし", "ご"], "牛": ["う", "なま", "ご"], "午": ["ぎゅう", "うし"], "使": ["べん", "たより"], "便": ["つか", "し"], "作": ["きのう", "さく"], "才": ["ざい", "き"], "楽": ["くすり", "やく"], "薬": ["たの", "らく", "がく"], "場": ["ゆ", "とう"], "湯": ["ば", "じょう"], "顔": ["ねが", "あたま", "ず"], "願": ["かお", "あたま"], "頭": ["かお", "ねが", "がん"], "姉": ["いもうと", "まい"], "妹": ["あね", "し", "ねえ"], "男": ["おんな", "じょ"], "女": ["おとこ", "だん"], "遠": ["えん", "その"], "送": ["えら", "せん"], "選": ["おく", "そう"], "起": ["はし", "そう"], "走": ["お", "き"], "口": ["かい", "まわ"], "回": ["くち", "こう"], "母": ["まい", "ごと"], "電": ["ゆき", "あめ", "せつ"], "雪": ["でん", "あめ", "う"], "雨": ["ゆき", "でん", "せつ"], "話": ["ご", "かた"], "言": ["はな", "ご", "わ"], "金": ["ぜん", "すべ"], "犬": ["だい", "たい", "おお"], "食": ["の", "いん"], "飲": ["た", "しょく"], "車": ["こと", "じ"], "夫": ["てん", "あま"], "手": ["もう", "け"], "目": ["じ", "みずか"]};
 
@@ -8832,6 +8841,13 @@ function similarSoundReadings(r) {
   if (r.indexOf("ゅ") !== -1) v.push(r.replace("ゅ", "ゆ"));
   if (r.indexOf("ょ") !== -1) v.push(r.replace("ょ", "よ"));
   return v.filter(x => x.length >= 2 && x !== r);
+}
+
+
+// 漢字の語のインドネシア語訳
+function kanjiMeaningHtml(word) {
+  const m = KANJI_WORD_MEANING[word.k + ":" + word.r];
+  return m ? `<div class="kanji-meaning">🇮🇩 ${m}</div>` : "";
 }
 
 function generateDistractorReadings(word, lessonNum) {
@@ -9067,6 +9083,7 @@ function renderKanjiFlashcard() {
         <div class="flashcard-back">
           <div class="flashcard-kanji">${kanjiDisplay}</div>
           <div class="flashcard-reading">${readingDisplay}</div>
+          ${kanjiMeaningHtml(word)}
           <div class="flashcard-context">
             ${renderKanjiSentence(word.item, {mode: "highlight", targetLabel: word.label})}
             <div class="explain-id" style="margin-top: 8px;">${escapeHtml(word.item.id)}</div>
@@ -9198,6 +9215,7 @@ function renderKanjiQuizChoice() {
       ${kanjiState.answered ? `
         <div class="quiz-feedback">
           <div class="feedback-card ${_currentQuizSelectedIdx === correctIdx ? 'correct-feedback' : 'incorrect-feedback'}">
+            ${kanjiMeaningHtml(word)}
             ${_currentQuizSelectedIdx === correctIdx ? '✅ <strong>正解！</strong> / Benar!' : `❌ <strong><ruby>残念<rt>ざんねん</rt></ruby>！</strong> / Salah!<br><span style="font-size:0.9em;"><ruby>正<rt>ただ</rt></ruby>しい<ruby>答<rt>こた</rt></ruby>え / Jawaban: <strong>${choiceDisplay(word.r)}</strong></span>`}
           </div>
           <button class="quiz-btn primary" onclick="nextKanjiQuestion()">${kanjiState.idx + 1 >= total ? '<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る / Lihat hasil' : '<ruby>次<rt>つぎ</rt></ruby>へ / Selanjutnya →'}</button>
@@ -9284,6 +9302,7 @@ function renderKanjiQuizInput() {
       ${kanjiState.answered ? `
         <div class="quiz-feedback">
           <div class="feedback-card ${isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+            ${kanjiMeaningHtml(word)}
             ${isCorrect ? `✅ <strong>正解！</strong> / Benar!<br><span style="font-size:0.9em;"><strong>${escapeHtml(fullReading)}</strong></span>` : `❌ <strong><ruby>残念<rt>ざんねん</rt></ruby>！</strong> / Salah!<br><span style="font-size:0.9em;">あなたの<ruby>答<rt>こた</rt></ruby>え / Jawaban Anda: <strong>${escapeHtml(userAns || '(空)')}</strong><br><ruby>正<rt>ただ</rt></ruby>しい<ruby>答<rt>こた</rt></ruby>え / Jawaban benar: <strong>${correctAnswerDisplay}</strong></span>`}
           </div>
           <button class="quiz-btn primary" onclick="nextKanjiQuestion()">${kanjiState.idx + 1 >= total ? '<ruby>結果<rt>けっか</rt></ruby>を<ruby>見<rt>み</rt></ruby>る / Lihat hasil' : '<ruby>次<rt>つぎ</rt></ruby>へ / Selanjutnya →'}</button>
@@ -9929,6 +9948,7 @@ function renderReviewKanjiQ(resolved, header) {
     feedback = `
       <div class="quiz-feedback">
         <div class="feedback-card ${isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+          ${kanjiMeaningHtml(word)}
           ${isCorrect
             ? `✅ <strong>正解！</strong> / Benar!<br><span style="font-size:0.9em;"><strong>${escapeHtml(fullReading)}</strong></span>`
             : `❌ <strong><ruby>残念<rt>ざんねん</rt></ruby>！</strong> / Salah!<br><span style="font-size:0.9em;"><ruby>正<rt>ただ</rt></ruby>しい<ruby>答<rt>こた</rt></ruby>え / Jawaban: <strong>${correctAnswerDisplay}</strong></span>`}
@@ -10166,7 +10186,7 @@ const BUILD_DATA = {
         {
           idText: "Milo-san umurnya berapa?",
           chunks: ["ミロさんは、", "<ruby>何歳<rt>なんさい</rt></ruby>", "ですか"],
-          extra: ["カッターは、"],
+          extra: ["ミロさんを、"],
           note: "<ruby>疑問詞<rt>ぎもんし</rt></ruby>「<ruby>何歳<rt>なんさい</rt></ruby>」＋ですか。/ Kata tanya + ですか."
         },
         {
@@ -10184,13 +10204,13 @@ const BUILD_DATA = {
         {
           idText: "Cutter-nya ada di sini, lho.",
           chunks: ["カッターは、", "ここに", "ありますよ"],
-          extra: ["ミロさんは、"],
+          extra: ["ここで"],
           note: "「あるよ」→「ありますよ」。"
         },
         {
           idText: "Saya sama sekali tidak berolahraga, ya.",
           chunks: ["スポーツは、", "ぜんぜん", "しませんね"],
-          extra: ["ミロさんは、"],
+          extra: ["しますね"],
           note: "「ぜんぜん」＋<ruby>否定<rt>ひてい</rt></ruby>「しません」。"
         },
         {
@@ -10945,7 +10965,7 @@ const BUILD_DATA = {
         {
           idText: "Mulai besok mungkin menjadi sejuk.",
           chunks: ["<ruby>明日<rt>あした</rt></ruby>から、", "すずしく", "なる", "でしょう"],
-          extra: ["<ruby>午後<rt>ごご</rt></ruby>から、"]
+          extra: ["すずしい"]
         },
         {
           idText: "Minggu ini cuacanya mungkin bagus terus.",
@@ -11102,13 +11122,13 @@ const BUILD_DATA = {
           extra: ["<ruby>郵便局<rt>ゆうびんきょく</rt></ruby>は、"] },
         { img: "6-1-4", idText: "Kuil Suga, sebaiknya lewat mana ya?", 
           chunks: ["<ruby>須賀神社<rt>すがじんじゃ</rt></ruby>は、", "どう", "<ruby>行<rt>い</rt></ruby>ったら", "いいですか"],
-          extra: ["<ruby>郵便局<rt>ゆうびんきょく</rt></ruby>は、"] },
+          extra: ["<ruby>須賀<rt>すが</rt></ruby><ruby>神社<rt>じんじゃ</rt></ruby>に、"] },
         { img: "6-1-5", idText: "Saya mau ke Bank JF...", 
           chunks: ["JF<ruby>銀行<rt>ぎんこう</rt></ruby>に", "<ruby>行<rt>い</rt></ruby>きたいんですが"],
           extra: ["JF<ruby>銀行<rt>ぎんこう</rt></ruby>で", "<ruby>行<rt>い</rt></ruby>きたいんですか"] },
         { img: "6-1-6", idText: "Dek observasi, sebaiknya lewat mana ya?", 
           chunks: ["<ruby>展望台<rt>てんぼうだい</rt></ruby>は、", "どう", "<ruby>行<rt>い</rt></ruby>ったら", "いいですか"],
-          extra: ["<ruby>郵便局<rt>ゆうびんきょく</rt></ruby>は、"] }
+          extra: ["<ruby>展望台<rt>てんぼうだい</rt></ruby>に、"] }
       ]
     },
     {
@@ -11175,7 +11195,7 @@ const BUILD_DATA = {
           extra: ["1<ruby>階<rt>いっかい</rt></ruby>の"] },
         { idText: "Hmm, bagaimana kalau jam setengah tujuh?", 
           chunks: ["そうですね、", "6<ruby>時半<rt>ろくじはん</rt></ruby>は", "どうですか"],
-          extra: ["10<ruby>時<rt>じゅうじ</rt></ruby>に、"] },
+          extra: ["6<ruby>時半<rt>ろくじはん</rt></ruby>に"] },
         { idText: "Bagaimana kalau di lobi hotel?", 
           chunks: ["ホテルの", "ロビーは", "どうですか"],
           extra: ["6<ruby>時半<rt>ろくじはん</rt></ruby>は"] },
@@ -11747,10 +11767,10 @@ const BUILD_DATA = {
           extra: ["どっちが"] },
         { idText: "Kombu, tarako, atau ume, mana yang lebih baik?", 
           chunks: ["<ruby>昆布<rt>こんぶ</rt></ruby>と", "たらこと", "<ruby>梅<rt>うめ</rt></ruby>、", "どれが", "いいですか"],
-          extra: ["<ruby>魚<rt>さかな</rt></ruby>と、"] },
+          extra: ["どっちが"] },
         { idText: "Daging atau ikan, mana yang lebih baik?", 
           chunks: ["<ruby>肉<rt>にく</rt></ruby>と", "<ruby>魚<rt>さかな</rt></ruby>と、", "どっちが", "いいですか"],
-          extra: ["<ruby>梅<rt>うめ</rt></ruby>、"] },
+          extra: ["どれが"] },
         { idText: "Korokke, shumai, atau karaage, mana yang lebih baik?", 
           chunks: ["コロッケと", "シュウマイと", "<ruby>唐揚<rt>からあ</rt></ruby>げ、", "どれが", "いいですか"],
           extra: ["ラーメンと"] }
@@ -11815,26 +11835,26 @@ const BUILD_DATA = {
       title: "ナA-／イA-そうです",
       desc: "Menebak dari penampilan",
       items: [
-        { idText: "Wah, kelihatannya sangat pedas ya.", 
+        { idText: "Oh, kelihatannya sangat pedas ya.", 
           chunks: ["へー、", "すごく", "<ruby>辛<rt>から</rt></ruby>そう", "ですね"],
-          extra: ["わあ、"], 
+          extra: ["<ruby>辛<rt>から</rt></ruby>いそう"], 
           note: "イ<ruby>形容詞<rt>けいようし</rt></ruby>は「い」を<ruby>取<rt>と</rt></ruby>って「そう」。" },
         { idText: "Kue itu kelihatannya manis ya.", 
           chunks: ["そのケーキ、", "<ruby>甘<rt>あま</rt></ruby>そう", "ですね"],
-          extra: ["そのみかん、"] },
+          extra: ["<ruby>甘<rt>あま</rt></ruby>いそう"] },
         { idText: "Wah, kelihatannya enak!", 
           chunks: ["わあ、", "おいし", "そう！"],
-          extra: ["へー、"] },
+          extra: ["おいしい"] },
         { idText: "Tapi rasanya kelihatannya agak hambar ya.", 
           chunks: ["でも、", "ちょっと", "<ruby>味<rt>あじ</rt></ruby>がうす", "そうですね"],
-          extra: ["へー、"] },
+          extra: ["<ruby>味<rt>あじ</rt></ruby>がうすい"] },
         { idText: "Benar. Kelihatannya anak-anak akan suka ya.", 
           chunks: ["<ruby>本当<rt>ほんとう</rt></ruby>。", "<ruby>子<rt>こ</rt></ruby>どもが", "<ruby>好<rt>す</rt></ruby>きそう", "ですね"],
           extra: ["へー、"], 
           note: "ナ<ruby>形容詞<rt>けいようし</rt></ruby>は「な」を<ruby>取<rt>と</rt></ruby>って「そう」。" },
         { idText: "Jeruk itu kelihatannya masih asam ya.", 
           chunks: ["そのみかん、", "まだ", "すっぱそう", "ですね"],
-          extra: ["そのケーキ、"] }
+          extra: ["すっぱいそう"] }
       ]
     },
     {
@@ -11961,19 +11981,19 @@ const BUILD_DATA = {
       items: [
         { idText: "Rasanya tidak hambar?", 
           chunks: ["<ruby>味<rt>あじ</rt></ruby>は、", "うすく", "ないですか"],
-          extra: ["お<ruby>茶<rt>ちゃ</rt></ruby>、"] },
+          extra: ["うすい"] },
         { idText: "Karinya tidak pedas?", 
           chunks: ["カレー、", "<ruby>辛<rt>から</rt></ruby>く", "ないですか"],
-          extra: ["<ruby>梅干<rt>うめぼ</rt></ruby>し、"] },
+          extra: ["<ruby>辛<rt>から</rt></ruby>い"] },
         { idText: "Umeboshinya tidak asam?", 
           chunks: ["<ruby>梅干<rt>うめぼ</rt></ruby>し、", "すっぱく", "ないですか"],
-          extra: ["カレー、"] },
+          extra: ["すっぱい"] },
         { idText: "Tehnya tidak pahit?", 
           chunks: ["お<ruby>茶<rt>ちゃ</rt></ruby>、", "<ruby>苦<rt>にが</rt></ruby>く", "ないですか"],
-          extra: ["<ruby>味<rt>あじ</rt></ruby>は、"] },
+          extra: ["<ruby>苦<rt>にが</rt></ruby>い"] },
         { idText: "Kue itu tidak manis?", 
           chunks: ["そのケーキ、", "<ruby>甘<rt>あま</rt></ruby>く", "ないですか"],
-          extra: ["カレー、"] },
+          extra: ["<ruby>甘<rt>あま</rt></ruby>い"] },
         { idText: "Cara makan shabu-shabu tidak sulit?", 
           chunks: ["しゃぶしゃぶの<ruby>食<rt>た</rt></ruby>べ<ruby>方<rt>かた</rt></ruby>、", "<ruby>難<rt>むずか</rt></ruby>しく", "ないですか"],
           extra: ["そのケーキ、"] }
@@ -12398,13 +12418,13 @@ const BUILD_DATA = {
           extra: ["<ruby>朝<rt>あさ</rt></ruby>ご<ruby>飯<rt>はん</rt></ruby>を<ruby>食<rt>た</rt></ruby>べる<ruby>前<rt>まえ</rt></ruby>で"] },
         { idText: "Obat ini diminum segera setelah bangun pagi.", 
           chunks: ["この<ruby>薬<rt>くすり</rt></ruby>は、", "<ruby>朝<rt>あさ</rt></ruby>", "<ruby>起<rt>お</rt></ruby>きたあとに、", "すぐ<ruby>飲<rt>の</rt></ruby>んでください"],
-          extra: ["1<ruby>日<rt>いちにち</rt></ruby>3<ruby>回<rt>さんかい</rt></ruby>、"] },
+          extra: ["<ruby>起<rt>お</rt></ruby>きる<ruby>前<rt>まえ</rt></ruby>に、"] },
         { idText: "Obat ini diminum sebelum minum alkohol.", 
           chunks: ["この<ruby>薬<rt>くすり</rt></ruby>は、", "お<ruby>酒<rt>さけ</rt></ruby>を<ruby>飲<rt>の</rt></ruby>む<ruby>前<rt>まえ</rt></ruby>に", "<ruby>飲<rt>の</rt></ruby>んでください"],
           extra: ["お<ruby>酒<rt>さけ</rt></ruby>を<ruby>飲<rt>の</rt></ruby>む<ruby>前<rt>まえ</rt></ruby>で"] },
         { idText: "Obat ini diminum malam hari setelah mandi.", 
           chunks: ["この<ruby>薬<rt>くすり</rt></ruby>は、", "<ruby>夜<rt>よる</rt></ruby>、", "お<ruby>風呂<rt>ふろ</rt></ruby>に<ruby>入<rt>はい</rt></ruby>ったあとに", "<ruby>飲<rt>の</rt></ruby>んでください"],
-          extra: ["1<ruby>日<rt>いちにち</rt></ruby>3<ruby>回<rt>さんかい</rt></ruby>、"] },
+          extra: ["お<ruby>風呂<rt>ふろ</rt></ruby>に<ruby>入<rt>はい</rt></ruby>る<ruby>前<rt>まえ</rt></ruby>に"] },
         { idText: "Obat ini diminum sebelum naik kapal.", 
           chunks: ["この<ruby>薬<rt>くすり</rt></ruby>は、", "<ruby>船<rt>ふね</rt></ruby>に<ruby>乗<rt>の</rt></ruby>る<ruby>前<rt>まえ</rt></ruby>に", "<ruby>飲<rt>の</rt></ruby>んでください"],
           extra: ["<ruby>船<rt>ふね</rt></ruby>に<ruby>乗<rt>の</rt></ruby>る<ruby>前<rt>まえ</rt></ruby>で"] },
