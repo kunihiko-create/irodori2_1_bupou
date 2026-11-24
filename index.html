@@ -15215,6 +15215,19 @@ document.addEventListener("keydown", e => {
   const b = quizNavButton(e.key === "ArrowRight" ? 1 : -1);
   if (b) { e.preventDefault(); b.click(); }
 });
+// 答えたあと、Enter / return キーで「次へ」に進む（文法・文づくり・活用形・テスト・ミックス）
+// ※ 漢字・ことば・復習モードは、それぞれ専用の Enter 処理がある
+const ENTER_NEXT_RE = /^(nextQuestion|nextBuildQuestion|nextConjQuestion|nextLessonTestQ|nextMixQuestion)\(\)/;
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return;
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isLockedScreen()) return;
+  const tg = e.target;
+  if (tg && (tg.tagName === "INPUT" && !tg.disabled || tg.tagName === "TEXTAREA" || tg.isContentEditable)) return;
+  const b = [...main.querySelectorAll("button[onclick]")].find(x =>
+    !x.classList.contains("nav-btn") && !x.disabled && x.offsetParent !== null &&
+    ENTER_NEXT_RE.test(x.getAttribute("onclick")));
+  if (b) { e.preventDefault(); b.click(); }
+});
 (function installSwipeNav() {
   let sx = 0, sy = 0, st = 0, active = false;
   main.addEventListener("touchstart", e => {
